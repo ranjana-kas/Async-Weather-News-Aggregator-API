@@ -17,6 +17,9 @@ env/
 
 # Logs
 *.log
+log.txt
+api_logs.txt
+*.log
 
 # OS files
 .DS_Store
