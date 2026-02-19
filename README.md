@@ -2,7 +2,7 @@
 
 # 📘 Async Weather & News Aggregator API
 
-An intermediate-level FastAPI microservice designed to fetch and aggregate real-time data using asynchronous programming.
+A FastAPI microservice designed to fetch and aggregate real-time data using asynchronous programming.
 
 ## 🚀 Features
 - **Async & Parallel**: Fetches weather and news simultaneously using `asyncio.gather`.
@@ -49,8 +49,8 @@ uvicorn main:app --reload
 
 
 
-## 2. Verifying the Stretch Goals
-Since you want to implement everything, here is how you can verify the "Master" features you've built:
+## 2. Other Important Points
+
 
 ### A. Rate Limiting Test
 Try refreshing your browser or clicking "Execute" in Swagger (`/docs`) 11 times very quickly. On the 11th click, you should see:
@@ -69,13 +69,11 @@ Notice the "Response time" in Swagger. The `/briefing` endpoint should take roug
 
 ---
 
-## 3. The Final Rubric Check
-Based on your project specification, here is your self-evaluation checklist:
+## 3. The Final 
 
-* **Async Usage**: 5/5 (Using `httpx.AsyncClient` and `asyncio.gather`).
-* **Error Handling**: 5/5 (Handling 404s for cities and 502/504 for APIs).
-* **Stretch Goals**: 5/5 (Caching, Rate limiting, and Background logging all included).
+* **Async Usage**: Using `httpx.AsyncClient` and `asyncio.gather`.
+* **Error Handling**:Handling 404s for cities and 502/504 for APIs.
+* **Stretch Goals**: Caching, Rate limiting, and Background logging all included.
 
-**Would you like me to help you write a `test_main.py` file to add automated testing to this project, or are you ready to wrap this up?**
 
 ```
