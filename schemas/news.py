@@ -1,13 +1,14 @@
 from pydantic import BaseModel
 from typing import List, Optional
-# ADD THIS IMPORT BELOW
 from schemas.weather import WeatherResponse 
 
 class NewsResponse(BaseModel):
-    headlines: List[str]
+    city_news: List[str]
+    national_news: List[str]
+    world_news: List[str]
 
 class DailyBriefing(BaseModel):
-    # Now WeatherResponse is recognized!
     weather: Optional[WeatherResponse] = None
-    news: List[str] = []
-    warning: Optional[str] = None
+    news: NewsResponse # This now contains all three categories
+    warning: Optional[str] = None 
+    execution_time: float = 0.0

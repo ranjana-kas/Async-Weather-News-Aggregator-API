@@ -4,7 +4,7 @@ import os
 from fastapi import FastAPI, HTTPException, Request, status, BackgroundTasks
 from typing import Dict
 
-# Import your services and schemas [cite: 114-122]
+# Import your services and schemas
 from services.weather_service import get_weather
 from services.news_service import get_news
 from schemas.news import DailyBriefing, NewsResponse
@@ -14,8 +14,8 @@ from utils.http_client import AsyncClientWrapper
 app = FastAPI(title="Async Aggregator API")
 
 # --- 2. GLOBAL STORES (Stretch Goals) ---
-WEATHER_CACHE: Dict[str, dict] = {}  # In-memory cache [cite: 146-147]
-REQUEST_COUNTS: Dict[str, list] = {}  # For rate limiting [cite: 151]
+WEATHER_CACHE: Dict[str, dict] = {}  
+REQUEST_COUNTS: Dict[str, list] = {}  
 
 # --- 3. LIFESPAN EVENTS ---
 @app.on_event("startup")
@@ -26,7 +26,7 @@ async def startup_event():
 async def shutdown_event():
     await AsyncClientWrapper.close_client()
 
-# --- 4. MIDDLEWARE (Rate Limiting) [cite: 150-151] ---
+# --- 4. MIDDLEWARE (Rate Limiting)  ---
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
     client_ip = request.client.host
@@ -47,7 +47,7 @@ async def rate_limit_middleware(request: Request, call_next):
     REQUEST_COUNTS[client_ip].append(now)
     return await call_next(request)
 
-# --- 5. BACKGROUND TASKS [cite: 148-149] ---
+# --- 5. BACKGROUND TASKS  ---
 def log_request_to_file(city: str, status_code: int):
     with open("api_logs.txt", "a") as f:
         f.write(f"City: {city} | Status: {status_code} | Time: {time.ctime()}\n")
@@ -56,10 +56,10 @@ def log_request_to_file(city: str, status_code: int):
 
 @app.get("/weather/{city}", response_model=None)
 async def weather_endpoint(city: str):
-    # Caching Stretch Goal [cite: 145]
+    # Caching Stretch Goal 
     if city.lower() in WEATHER_CACHE:
         cache_data, timestamp = WEATHER_CACHE[city.lower()]
-        if time.time() - timestamp < 600:  # 10 minutes cache [cite: 146]
+        if time.time() - timestamp < 600:  # 10 minutes cache 
             return cache_data
             
     data = await get_weather(city)
@@ -71,22 +71,32 @@ async def news_endpoint():
     headlines = await get_news()
     return NewsResponse(headlines=headlines)
 
+# ... existing imports ...
+
 @app.get("/briefing/{city}", response_model=DailyBriefing)
 async def briefing_endpoint(city: str, background_tasks: BackgroundTasks):
-    # Parallel execution using asyncio.gather [cite: 60, 18]
-    results = await asyncio.gather(get_weather(city), get_news(), return_exceptions=True)
+    start_time = time.perf_counter()
+    results = await asyncio.gather(
+        get_weather(city), 
+        get_news(city=city), # News is now about the city!
+        return_exceptions=True
+    )
+    end_time = time.perf_counter()
+    duration = end_time - start_time
     
     weather_res = results[0] if not isinstance(results[0], Exception) else None
     news_res = results[1] if not isinstance(results[1], Exception) else []
     
     warning = None
     if any(isinstance(r, Exception) for r in results):
-        warning = "Partial data: One or more upstream services failed." [cite: 76]
+        warning = "Partial data: One or more services failed."
 
-    if weather_res is None and not news_res:
-        raise HTTPException(status_code=502, detail="Both services failed") [cite: 77]
-
-    # Background Task Stretch Goal [cite: 148]
+    # Log to file in the background 
     background_tasks.add_task(log_request_to_file, city, 200)
 
-    return DailyBriefing(weather=weather_res, news=news_res, warning=warning)
+    return DailyBriefing(
+        weather=weather_res, 
+        news=news_res, 
+        warning=warning,
+        execution_time=round(duration, 4) # Round to 4 decimal places
+    )

@@ -2,33 +2,38 @@ from utils.http_client import AsyncClientWrapper
 from schemas.weather import WeatherResponse
 from fastapi import HTTPException
 
-# Simple mapping for demonstration
-CITY_COORDS = {
-    "delhi": {"lat": 28.61, "lon": 77.20},
-    "bilaspur": {"lat": 22.07, "lon": 82.13},
-    "london": {"lat": 51.50, "lon": -0.12}
-}
-
-async def get_weather(city: str) -> WeatherResponse:
-    city_lower = city.lower()
-    if city_lower not in CITY_COORDS:
-        raise HTTPException(status_code=404, detail="City not supported") [cite: 38, 91]
-
-    coords = CITY_COORDS[city_lower]
+async def get_coords(city: str):
+    """Turns a city name into Latitude and Longitude."""
     client = AsyncClientWrapper.get_client()
     
-    try:
-        url = f"https://api.open-meteo.com/v1/forecast?latitude={coords['lat']}&longitude={coords['lon']}&current_weather=true"
-        response = await client.get(url)
-        
-        if response.status_code != 200:
-            raise HTTPException(status_code=502, detail="Weather API Error") [cite: 39]
-            
-        data = response.json()["current_weather"]
-        return WeatherResponse(
-            city=city.capitalize(),
-            temperature=data["temperature"],
-            condition=str(data["weathercode"]) # Codes can be mapped to strings later
-        )
-    except Exception:
-        raise HTTPException(status_code=504, detail="Weather API Timeout") [cite: 40, 90]
+    # Using Open-Meteo's free geocoding service
+    url = f"https://geocoding-api.open-meteo.com/v1/search?name={city}&count=1&language=en&format=json"
+    response = await client.get(url)
+    data = response.json()
+    
+    if not data.get("results"):
+        return None
+    
+    result = data["results"][0]
+    return {"lat": result["latitude"], "lon": result["longitude"], "name": result["name"]}
+
+async def get_weather(city: str) -> WeatherResponse:
+    coords = await get_coords(city) 
+    if not coords:
+        raise HTTPException(status_code=404, detail="City not found")
+    
+    client = AsyncClientWrapper.get_client()
+    url = f"https://api.open-meteo.com/v1/forecast?latitude={coords['lat']}&longitude={coords['lon']}&current_weather=true"
+    
+    response = await client.get(url)
+    data = response.json()["current_weather"]
+    
+    condition_map = {0: "Sunny", 1: "Mainly Clear", 2: "Partly Cloudy", 3: "Overcast", 45: "Foggy", 51: "Drizzle", 61: "Rainy"}
+    condition_text = condition_map.get(data["weathercode"], "Cloudy")
+
+    return WeatherResponse(
+        city=coords["name"],
+        temperature=data["temperature"],
+        condition=condition_text 
+    )
+
