@@ -1,10 +1,4 @@
 
-## 1. Finalizing Documentation (README.md)
-
-A professional project is only as good as its documentation. Based on the requirements, your README must be clear enough for another developer to run your project instantly .
-
-**File:** `aggregator_api/README.md`
-
 ```markdown
 # 📘 Async Weather & News Aggregator API
 
