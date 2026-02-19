@@ -13,8 +13,7 @@ city = st.text_input("Enter your city:", value="Delhi")
 if st.button("Get My Briefing"):
     with st.spinner('Fetching your data...'):
         try:
-            # 3. Call your FastAPI Backend
-            # Ensure your FastAPI server is running on http://127.0.0.1:8000
+            # 3. Call FastAPI Backend
             response = requests.get(f"http://127.0.0.1:8000/briefing/{city}")
             
             if response.status_code == 200:
