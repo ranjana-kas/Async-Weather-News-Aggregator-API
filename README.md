@@ -1,5 +1,5 @@
 
-```markdown
+
 # 📘 Async Weather & News Aggregator API
 
 An intermediate-level FastAPI microservice designed to fetch and aggregate real-time data using asynchronous programming.
@@ -18,7 +18,7 @@ An intermediate-level FastAPI microservice designed to fetch and aggregate real-
    ```bash
    pip install fastapi uvicorn httpx python-dotenv
 
-```
+
 
 3. 
 **Configure Environment**: Create a `.env` file with your `GNEWS_API_KEY`.
