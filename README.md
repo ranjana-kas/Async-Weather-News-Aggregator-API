@@ -75,5 +75,9 @@ Notice the "Response time" in Swagger. The `/briefing` endpoint should take roug
 * **Error Handling**:Handling 404s for cities and 502/504 for APIs.
 * **Stretch Goals**: Caching, Rate limiting, and Background logging all included.
 
+## try this out 
+
+Visit [app](https://async-weather-news-aggregator-api-ddygizu9mqcrzop5msxzmh.streamlit.app/) 
+
 
 ```
