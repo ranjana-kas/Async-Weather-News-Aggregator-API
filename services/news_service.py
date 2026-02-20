@@ -33,6 +33,20 @@ async def fetch_category(query: str, count: int) -> List[str]:
         return []
 
 
+async def fetch_large_news_batch(query: str, total_count: int = 50) -> List[str]:
+    """Fetches a large volume of news specifically so we can paginate it."""
+    client = AsyncClientWrapper.get_client()
+    
+    # We ask GNews for up to 50 articles
+    url = f"https://gnews.io/api/v4/search?q={query}&max={total_count}&lang=en&apikey={API_KEY}"
+    
+    try:
+        response = await client.get(url, timeout=5.0)
+        data = response.json()
+        return [article["title"] for article in data.get("articles", [])]
+    except Exception:
+        return []
+
 async def get_news(city: str) -> Dict[str, List[str]]:
    
     results = await asyncio.gather(

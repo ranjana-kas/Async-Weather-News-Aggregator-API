@@ -20,10 +20,12 @@ env/
 log.txt
 api_logs.txt
 *.log
+quota.json
 
 # OS files
 .DS_Store
 Thumbs.db
+
 
 # Build
 dist/

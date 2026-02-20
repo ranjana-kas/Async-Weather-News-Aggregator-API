@@ -1,8 +1,9 @@
 import asyncio
 import time
 import os
-from fastapi import FastAPI, HTTPException, Request, status, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Request, status, BackgroundTasks, Query
 from typing import Dict
+from concurrent.futures import ThreadPoolExecutor
 
 # Import your services and schemas
 from services.weather_service import get_weather
@@ -47,7 +48,10 @@ async def rate_limit_middleware(request: Request, call_next):
     REQUEST_COUNTS[client_ip].append(now)
     return await call_next(request)
 
+
+
 # --- 5. BACKGROUND TASKS  ---
+log_executor = ThreadPoolExecutor(max_workers=3)
 def log_request_to_file(city: str, status_code: int):
     with open("api_logs.txt", "a") as f:
         f.write(f"City: {city} | Status: {status_code} | Time: {time.ctime()}\n")
@@ -66,19 +70,32 @@ async def weather_endpoint(city: str):
     WEATHER_CACHE[city.lower()] = (data, time.time())
     return data
 
-@app.get("/news", response_model=NewsResponse)
-async def news_endpoint():
-    headlines = await get_news()
-    return NewsResponse(headlines=headlines)
-
-# ... existing imports ...
+@app.get("/news")
+async def news_endpoint(
+    city: str = Query(..., description="Enter a city to search for news"),
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(10, ge=1, le=50, description="Items per page")
+):
+    all_news = await fetch_large_news_batch(city, total_count=50) 
+    
+    start_index = (page - 1) * limit
+    end_index = start_index + limit
+    
+    paginated_headlines = all_news[start_index:end_index]
+    
+    return {
+        "page": page,
+        "limit": limit,
+        "total_results": len(all_news), 
+        "headlines": paginated_headlines
+    }
 
 @app.get("/briefing/{city}", response_model=DailyBriefing)
 async def briefing_endpoint(city: str, background_tasks: BackgroundTasks):
     start_time = time.perf_counter()
     results = await asyncio.gather(
         get_weather(city), 
-        get_news(city=city), # News is now about the city!
+        get_news(city=city), 
         return_exceptions=True
     )
     end_time = time.perf_counter()
@@ -92,7 +109,7 @@ async def briefing_endpoint(city: str, background_tasks: BackgroundTasks):
         warning = "Partial data: One or more services failed."
 
     # Log to file in the background 
-    background_tasks.add_task(log_request_to_file, city, 200)
+    log_executor.submit(log_request_to_file, city, 200)
 
     return DailyBriefing(
         weather=weather_res, 
